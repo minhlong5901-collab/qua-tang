@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quà tặng cho bé yêu 💌</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fff5f3;--card:#ffffff;--ink:#4a2f3a;--sub:#9a7580;--accent:#e8708a;--accent2:#f6b7a5;--track:#f3dde0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241a1e;--card:#33252b;--ink:#fbe9ec;--sub:#c4a0aa;--accent:#f08aa2;--accent2:#8c4b5b;--track:#4a363e}}
+:root[data-theme="dark"]{--bg:#241a1e;--card:#33252b;--ink:#fbe9ec;--sub:#c4a0aa;--accent:#f08aa2;--accent2:#8c4b5b;--track:#4a363e}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;line-height:1.55}
+main{max-width:480px;margin:0 auto;padding:28px 18px 48px}
+header{text-align:center;margin-bottom:24px}
+.heart{font-size:44px;display:inline-block;animation:beat 1.8s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+h1{font-size:26px;margin:8px 0 6px;font-weight:700}
+header p{margin:0;color:var(--sub);font-size:15px}
+.letter{background:var(--card);border-radius:20px;padding:18px 20px;margin-bottom:22px;box-shadow:0 4px 18px rgba(232,112,138,.12);font-size:15px}
+.letter b{color:var(--accent)}
+h2{font-size:15px;color:var(--sub);font-weight:600;margin:0 0 10px 4px;letter-spacing:.3px}
+.track{background:var(--card);border-radius:18px;padding:14px 16px;margin-bottom:12px;box-shadow:0 3px 12px rgba(232,112,138,.1)}
+.row{display:flex;align-items:center;gap:14px}
+.btn{flex:none;width:52px;height:52px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:20px;cursor:pointer;display:grid;place-items:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:active{transform:scale(.94)}
+.info{flex:1;min-width:0}
+.name{font-weight:600;font-size:16px}
+.desc{font-size:13px;color:var(--sub)}
+.bar{height:6px;background:var(--track);border-radius:3px;margin-top:12px;cursor:pointer;overflow:hidden}
+.fill{height:100%;width:0;background:var(--accent);border-radius:3px}
+.time{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:4px}
+footer{text-align:center;color:var(--sub);font-size:14px;margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="heart">💗</div>
+    <h1>Gửi bé yêu của anh</h1>
+    <p>Bấm vào nút ▶ để nghe những lời anh muốn nói với em</p>
+  </header>
+
+  <section class="letter">
+    Mỗi file ghi âm dưới đây là một lời nhắn <b>anh dành riêng cho em</b>.
+    Hãy đeo tai nghe, tìm một chỗ yên tĩnh và nghe từng đoạn nhé.
+  </section>
+
+  <h2>CÁC LỜI NHẮN</h2>
+  <div id="list"></div>
+
+  <footer>Yêu em nhiều lắm 🌷</footer>
+</main>
+
+<script>
+// ===== CHỈNH SỬA Ở ĐÂY =====
+// src: đường dẫn file trong thư mục audio/ (ví dụ "audio/loi-nhan-1.mp3"). Để "" thì nút sẽ bị khoá
+var TRACKS = [
+  {name:"Lời nhắn số 1", desc:"Mở đầu", src:"audio/loi-nhan-1.mp3"},
+  {name:"Lời nhắn số 2", desc:"Điều anh muốn nói", src:"audio/loi-nhan-2.mp3"},
+  {name:"Lời nhắn số 3", desc:"Món quà nhỏ cho em", src:"audio/loi-nhan-3.mp3"}
+];
+// ============================
+
+var list = document.getElementById("list");
+var current = null;
+
+function fmt(s){ if(!isFinite(s)) return "0:00"; var m=Math.floor(s/60), x=Math.floor(s%60); return m+":"+(x<10?"0":"")+x; }
+
+TRACKS.forEach(function(t, i){
+  var el = document.createElement("div");
+  el.className = "track";
+  el.innerHTML =
+    '<div class="row"><button class="btn" aria-label="Phát">▶</button>' +
+    '<div class="info"><div class="name"></div><div class="desc"></div></div></div>' +
+    '<div class="bar"><div class="fill"></div></div>' +
+    '<div class="time"><span class="cur">0:00</span><span class="dur">0:00</span></div>';
+  el.querySelector(".name").textContent = t.name;
+  el.querySelector(".desc").textContent = t.desc;
+  list.appendChild(el);
+
+  var btn = el.querySelector(".btn"), fill = el.querySelector(".fill"),
+      cur = el.querySelector(".cur"), dur = el.querySelector(".dur"), bar = el.querySelector(".bar");
+
+  if(!t.src){ btn.disabled = true; return; }
+
+  var a = new Audio(t.src);
+  a.preload = "metadata";
+  a.addEventListener("error", function(){ btn.disabled = true; el.querySelector(".desc").textContent = "Chưa có file ghi âm ✨"; });
+  a.addEventListener("loadedmetadata", function(){ dur.textContent = fmt(a.duration); });
+  a.addEventListener("timeupdate", function(){
+    fill.style.width = (a.duration ? a.currentTime / a.duration * 100 : 0) + "%";
+    cur.textContent = fmt(a.currentTime);
+  });
+  a.addEventListener("ended", function(){ btn.textContent = "▶"; fill.style.width = "0"; cur.textContent = "0:00"; current = null; });
+
+  btn.addEventListener("click", function(){
+    if(current && current.audio !== a){ current.audio.pause(); current.btn.textContent = "▶"; }
+    if(a.paused){ a.play(); btn.textContent = "❚❚"; current = {audio:a, btn:btn}; }
+    else { a.pause(); btn.textContent = "▶"; }
+  });
+  bar.addEventListener("click", function(e){
+    var r = bar.getBoundingClientRect();
+    if(a.duration) a.currentTime = (e.clientX - r.left) / r.width * a.duration;
+  });
+});
+</script>
+</body>
+</html>
