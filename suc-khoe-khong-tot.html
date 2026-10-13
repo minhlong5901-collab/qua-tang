@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nếu hôm nay sức khỏe em không tốt 🤍</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fff4ee;--card:#ffffff;--ink:#4a3a36;--sub:#9b8078;--accent:#f28b82;--soft:#fde3dc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241c1b;--card:#33282a;--ink:#fbeae6;--sub:#c9a69f;--accent:#f4978f;--soft:#4a3633}}
+:root[data-theme="dark"]{--bg:#241c1b;--card:#33282a;--ink:#fbeae6;--sub:#c9a69f;--accent:#f4978f;--soft:#4a3633}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;line-height:1.6}
+main{max-width:460px;margin:0 auto;padding:36px 22px 44px;text-align:center}
+.icon{font-size:52px;display:inline-block;animation:beat 2s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+h1{font-size:25px;margin:12px 0 8px;font-weight:700}
+.lead{color:var(--sub);font-size:15px;margin:0 0 24px}
+.frame{background:var(--card);border-radius:24px;padding:12px;box-shadow:0 6px 22px rgba(242,139,130,.18)}
+.frame img{display:block;width:100%;height:auto;border-radius:16px;background:var(--soft)}
+.missing{display:none;padding:56px 16px;color:var(--sub);font-size:14px}
+.missing span{display:block;font-size:44px;margin-bottom:8px}
+.note{margin:24px 6px 0;color:var(--sub);font-size:14px}
+.note b{color:var(--ink);font-weight:500}
+footer{margin-top:26px;color:var(--sub);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <div class="icon">🤍</div>
+  <h1>Nếu hôm nay sức khỏe em không tốt</h1>
+  <p class="lead">Nghỉ ngơi một chút nhé. Anh gửi em một cái hôn này.</p>
+
+  <section class="frame">
+    <img id="gif" src="img/hun.gif" alt="Một cái hôn dành cho em">
+    <div class="missing" id="missing"><span>💋</span>Chưa có ảnh GIF</div>
+  </section>
+
+  <p class="note"><b>Em nhớ uống nước ấm, ăn chút gì đó và đi nghỉ sớm nhé.</b><br>Mau khỏe để anh còn hun em thật nhé.</p>
+  <footer>Thương em nhiều 🌷</footer>
+</main>
+
+<script>
+// ===== CHỈNH SỬA Ở ĐÂY =====
+// Ảnh GIF đặt trong thư mục img/ với tên hun.gif (đổi đường dẫn ở thẻ <img> phía trên nếu muốn)
+// ============================
+var img = document.getElementById("gif");
+img.addEventListener("error", function(){
+  img.style.display = "none";
+  document.getElementById("missing").style.display = "block";
+});
+</script>
+</body>
+</html>
