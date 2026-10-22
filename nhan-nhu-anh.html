@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nếu hôm nay em có điều nhắn nhủ với anh 💌</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f1f8f6;--card:#fff;--ink:#2f4a46;--sub:#7b9893;--accent:#3fb1a0;--accent2:#8fd6c8;--soft:#dff1ed;--rec:#e5566b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15201e;--card:#203230;--ink:#e6f6f3;--sub:#9cbdb7;--accent:#52c4b3;--accent2:#2f7d72;--soft:#2c4643}}
+:root[data-theme="dark"]{--bg:#15201e;--card:#203230;--ink:#e6f6f3;--sub:#9cbdb7;--accent:#52c4b3;--accent2:#2f7d72;--soft:#2c4643}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;line-height:1.55}
+main{max-width:480px;margin:0 auto;padding:34px 18px 48px}
+header{text-align:center;margin-bottom:20px}
+.icon{font-size:50px}
+h1{font-size:23px;margin:10px 0 6px;font-weight:700}
+.lead{color:var(--sub);font-size:14px;margin:0}
+button,input,textarea{font-family:inherit;font-size:15px;color:var(--ink)}
+.add{width:100%;border:0;border-radius:18px;padding:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;font-size:16px;cursor:pointer}
+.add:active{transform:scale(.98)}
+.card{background:var(--card);border-radius:20px;padding:18px;margin-top:14px;box-shadow:0 4px 16px rgba(63,177,160,.14)}
+.hidden{display:none}
+label{display:block;font-size:13px;color:var(--sub);margin:14px 0 6px}
+input[type=date],textarea{width:100%;border:1px solid var(--soft);background:var(--bg);border-radius:12px;padding:10px 12px}
+textarea{min-height:84px;resize:vertical}
+.recbox{text-align:center}
+.rec{width:78px;height:78px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:28px;cursor:pointer;margin:2px auto 6px;display:grid;place-items:center}
+.rec.on{background:var(--rec);animation:pulse 1.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(229,86,107,.5)}100%{box-shadow:0 0 0 22px rgba(229,86,107,0)}}
+.hint{font-size:13px;color:var(--sub);min-height:20px}
+audio{width:100%;margin-top:10px}
+.row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;border:0;border-radius:14px;padding:12px;font-weight:600;cursor:pointer;background:var(--soft)}
+.btn.main{background:var(--accent);color:#fff}
+h2{font-size:14px;color:var(--sub);font-weight:600;margin:26px 0 0 4px}
+.msg .date{font-weight:600}
+.msg .txt{margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
+.msg .acts{display:flex;gap:8px;margin-top:12px}
+.msg .acts button{flex:1;border:0;border-radius:12px;padding:9px 6px;font-size:13px;background:var(--soft);cursor:pointer}
+.empty{text-align:center;color:var(--sub);font-size:14px;padding:26px 8px}
+.foot{text-align:center;color:var(--sub);font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="icon">💌</div>
+    <h1>Nếu hôm nay em có điều nhắn nhủ với anh</h1>
+    <p class="lead">Em cứ nói đi, anh luôn muốn nghe.</p>
+  </header>
+
+  <button class="add" id="addBtn">＋ Thêm lời nhắn</button>
+
+  <section class="card hidden" id="form">
+    <div class="recbox">
+      <button class="rec" id="rec" aria-label="Ghi âm">🎙️</button>
+      <div class="hint" id="recHint">Bấm để bắt đầu ghi âm</div>
+      <audio id="preview" controls class="hidden"></audio>
+    </div>
+    <label for="date">Ngày</label>
+    <input type="date" id="date">
+    <label for="text">Lời nhắn (nếu có)</label>
+    <textarea id="text" placeholder="Em muốn nói với anh điều gì..."></textarea>
+    <div class="row">
+      <button class="btn" id="cancel">Huỷ</button>
+      <button class="btn main" id="save">Lưu lời nhắn</button>
+    </div>
+  </section>
+
+  <h2>CÁC LỜI NHẮN CỦA EM</h2>
+  <div id="list"></div>
+  <p class="foot" id="foot">Lời nhắn được lưu ngay trên điện thoại này. Bấm “Gửi anh” để gửi cho anh qua Zalo, Messenger...</p>
+</main>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+// Dán link Web app của Google Apps Script (kết thúc bằng /exec) vào giữa hai dấu ngoặc kép
+var DRIVE_URL = "https://script.google.com/macros/s/AKfycbwcw9mnC8gFkKUl-h8dEjxYeEPIxtFYiReptb3JMzz5p8JFJp6LTSGEGltCQ2w9eZE/exec";
+var DB = null, mem = [];
+
+function openDB(cb){
+  try{
+    var r = indexedDB.open("nhan-nhu-anh", 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore("m", {keyPath:"id"}); };
+    r.onsuccess = function(){ DB = r.result; cb(); };
+    r.onerror = function(){ cb(); };
+  }catch(e){ cb(); }
+}
+function getAll(cb){
+  if(!DB){ cb(mem.slice()); return; }
+  try{ var q = DB.transaction("m").objectStore("m").getAll(); q.onsuccess = function(){ cb(q.result); }; q.onerror = function(){ cb([]); }; }catch(e){ cb([]); }
+}
+function putMsg(o, cb){
+  if(!DB){ mem.push(o); cb(); return; }
+  try{ var t = DB.transaction("m","readwrite"); t.objectStore("m").put(o); t.oncomplete = cb; t.onerror = cb; }catch(e){ mem.push(o); cb(); }
+}
+function delMsg(id, cb){
+  if(!DB){ mem = mem.filter(function(x){ return x.id !== id; }); cb(); return; }
+  try{ var t = DB.transaction("m","readwrite"); t.objectStore("m").delete(id); t.oncomplete = cb; t.onerror = cb; }catch(e){ cb(); }
+}
+
+function toB64(b, cb){ var r = new FileReader(); r.onload = function(){ cb(String(r.result).split(",")[1] || ""); }; r.readAsDataURL(b); }
+function syncMsg(m, cb){
+  if(!DRIVE_URL || m.synced){ cb(); return; }
+  var go = function(b64){
+    fetch(DRIVE_URL, {method:"POST", body: JSON.stringify({id:m.id, date:m.date, text:m.text, mime: m.blob ? (m.blob.type || "audio/webm") : "", audio: b64})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j && j.ok){ m.synced = true; putMsg(m, cb); } else cb(); })
+      .catch(function(){ cb(); });
+  };
+  if(m.blob) toB64(m.blob, go); else go("");
+}
+
+function today(){ var d = new Date(); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function vnDate(s){ var p = s.split("-"); return p.length === 3 ? p[2]+"/"+p[1]+"/"+p[0] : s; }
+function ext(type){ return /mp4|aac/.test(type) ? "m4a" : /ogg/.test(type) ? "ogg" : "webm"; }
+
+// ---- ghi âm ----
+var rec = null, chunks = [], stream = null, blob = null, tick = null, t0 = 0;
+function pickMime(){
+  if(!window.MediaRecorder) return null;
+  var c = ["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"];
+  for(var i=0;i<c.length;i++){ if(MediaRecorder.isTypeSupported(c[i])) return c[i]; }
+  return "";
+}
+function resetForm(){
+  blob = null; chunks = [];
+  $("preview").classList.add("hidden"); $("preview").removeAttribute("src");
+  $("rec").classList.remove("on"); $("rec").textContent = "🎙️";
+  $("recHint").textContent = "Bấm để bắt đầu ghi âm";
+  $("text").value = ""; $("date").value = today();
+}
+$("rec").addEventListener("click", function(){
+  var btn = this;
+  if(rec && rec.state === "recording"){ rec.stop(); return; }
+  var mime = pickMime();
+  if(mime === null || !navigator.mediaDevices){ $("recHint").textContent = "Trình duyệt này chưa hỗ trợ ghi âm. Hãy mở bằng Chrome hoặc Safari."; return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+    stream = s; chunks = [];
+    rec = mime ? new MediaRecorder(s, {mimeType:mime}) : new MediaRecorder(s);
+    rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = function(){
+      clearInterval(tick);
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      blob = new Blob(chunks, {type: rec.mimeType || mime || "audio/webm"});
+      btn.classList.remove("on"); btn.textContent = "🎙️";
+      $("recHint").textContent = "Đã ghi xong. Bấm lại để ghi âm lại.";
+      var p = $("preview"); p.src = URL.createObjectURL(blob); p.classList.remove("hidden");
+    };
+    rec.start(); t0 = Date.now();
+    btn.classList.add("on"); btn.textContent = "■";
+    $("preview").classList.add("hidden");
+    tick = setInterval(function(){ var s2 = Math.floor((Date.now()-t0)/1000); $("recHint").textContent = "Đang ghi âm... " + Math.floor(s2/60) + ":" + ("0"+(s2%60)).slice(-2) + " (bấm ■ để dừng)"; }, 500);
+  }).catch(function(){ $("recHint").textContent = "Chưa được cấp quyền micro. Hãy cho phép micro rồi thử lại."; });
+});
+
+// ---- form ----
+$("addBtn").addEventListener("click", function(){ $("form").classList.toggle("hidden"); if(!$("date").value) $("date").value = today(); });
+$("cancel").addEventListener("click", function(){
+  if(rec && rec.state === "recording") rec.stop();
+  resetForm(); $("form").classList.add("hidden");
+});
+$("save").addEventListener("click", function(){
+  if(rec && rec.state === "recording"){ $("recHint").textContent = "Bấm ■ để dừng ghi âm trước khi lưu."; return; }
+  var text = $("text").value.trim();
+  if(!blob && !text){ $("recHint").textContent = "Em ghi âm hoặc viết vài chữ trước khi lưu nhé."; return; }
+  var o = {id: Date.now(), date: $("date").value || today(), text: text, blob: blob};
+  putMsg(o, function(){ resetForm(); $("form").classList.add("hidden"); render(); syncMsg(o, render); });
+});
+
+// ---- danh sách ----
+function render(){
+  getAll(function(items){
+    items.sort(function(a,b){ return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+    var list = $("list"); list.innerHTML = "";
+    if(!items.length){ list.innerHTML = '<div class="empty">Chưa có lời nhắn nào.<br>Bấm “Thêm lời nhắn” để bắt đầu nhé 💌</div>'; return; }
+    items.forEach(function(m){
+      var el = document.createElement("div"); el.className = "card msg";
+      var d = document.createElement("div"); d.className = "date"; d.textContent = "📅 " + vnDate(m.date) + (DRIVE_URL ? (m.synced ? "  ☁️ Đã gửi anh" : "  ⏳ Chưa gửi") : ""); el.appendChild(d);
+      if(m.text){ var t = document.createElement("p"); t.className = "txt"; t.textContent = m.text; el.appendChild(t); }
+      var url = null, e = null;
+      if(m.blob){
+        var a = document.createElement("audio"); a.controls = true; url = URL.createObjectURL(m.blob); a.src = url; el.appendChild(a);
+        e = ext(m.blob.type || "");
+      }
+      var acts = document.createElement("div"); acts.className = "acts";
+      var send = document.createElement("button"); send.textContent = "📤 Gửi anh";
+      send.onclick = function(){
+        var msg = "Lời nhắn ngày " + vnDate(m.date) + (m.text ? ": " + m.text : "");
+        if(m.blob){
+          var f = new File([m.blob], "loi-nhan-" + m.date + "." + e, {type: m.blob.type});
+          if(navigator.canShare && navigator.canShare({files:[f]})){ navigator.share({files:[f], text: msg}).catch(function(){}); return; }
+        }
+        if(navigator.share){ navigator.share({text: msg}).catch(function(){}); }
+        else if(url){ var l = document.createElement("a"); l.href = url; l.download = "loi-nhan-" + m.date + "." + e; l.click(); }
+      };
+      acts.appendChild(send);
+      if(url){
+        var dl = document.createElement("button"); dl.textContent = "⬇ Tải về";
+        dl.onclick = function(){ var l = document.createElement("a"); l.href = url; l.download = "loi-nhan-" + m.date + "." + e; l.click(); };
+        acts.appendChild(dl);
+      }
+      if(DRIVE_URL && !m.synced){
+        var rs = document.createElement("button"); rs.textContent = "☁️ Gửi lại";
+        rs.onclick = function(){ rs.textContent = "Đang gửi..."; syncMsg(m, render); };
+        acts.appendChild(rs);
+      }
+      var rm = document.createElement("button"); rm.textContent = "🗑 Xoá";
+      rm.onclick = function(){ if(confirm("Xoá lời nhắn này?")) delMsg(m.id, render); };
+      acts.appendChild(rm);
+      el.appendChild(acts); list.appendChild(el);
+    });
+  });
+}
+
+$("date").value = today();
+if(DRIVE_URL) $("foot").textContent = "Lời nhắn của em sẽ tự gửi cho anh khi có mạng. Nếu chưa gửi được, bấm “Gửi lại”.";
+openDB(render);
+</script>
+</body>
+</html>
